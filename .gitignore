@@ -1,0 +1,17 @@
+*.fa
+
+*.o
+*.obj
+
+*.gch
+
+*.so
+*.a
+
+*.out
+a.out
+
+build/
+/build/
+
+.vscode/
