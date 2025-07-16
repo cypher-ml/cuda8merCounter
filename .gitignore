@@ -1,5 +1,7 @@
 *.fa
 
+.DS_Store
+
 *.o
 *.obj
 
