@@ -22,21 +22,18 @@ namespace {
     queue<EncodedChunk> chunk_queue;
     mutex queue_mutex;
     condition_variable cv;
-    bool production_finished = false;
+    atomic<bool> production_finished(false);
+    atomic<size_t> active_producers(0);
 
     atomic<size_t> g_bytes_processed(0);
     atomic<size_t> g_file_size(0);
 }
 
 
-void producer_task(FastaStreamReader& reader) {
-    g_file_size = reader.get_file_size();
-
-    while (!reader.is_finished()) {
-        EncodedChunk chunk = reader.read_next_chunk();
+void producer_task(ParallelFastaReader& reader, size_t producer_id) {
+    while (!reader.isFinished()) {
+        EncodedChunk chunk = reader.readNextChunk();
         
-        g_bytes_processed = reader.get_bytes_processed();
-
         if (!chunk.data.empty()) {
             {
                 lock_guard<mutex> lock(queue_mutex);
@@ -45,12 +42,16 @@ void producer_task(FastaStreamReader& reader) {
             cv.notify_one();
         }
     }
-
-    {
+    
+    // Decrement active producers count
+    size_t remaining = active_producers.fetch_sub(1) - 1;
+    
+    // If this was the last producer, signal completion
+    if (remaining == 0) {
         lock_guard<mutex> lock(queue_mutex);
-        production_finished = true; 
+        production_finished = true;
+        cv.notify_all();
     }
-    cv.notify_all();
 }
 
 
@@ -59,24 +60,29 @@ void consumer_task(Histogram& local_histogram) {
         EncodedChunk chunk;
         {
             unique_lock<mutex> lock(queue_mutex);
-            cv.wait(lock, []{ return !chunk_queue.empty() || production_finished; });
+            cv.wait(lock, []{ return !chunk_queue.empty() || production_finished.load(); });
 
-            if (chunk_queue.empty() && production_finished) {
+            if (chunk_queue.empty() && production_finished.load()) {
                 return;
             }
 
             chunk = std::move(chunk_queue.front());
             chunk_queue.pop();
         }
-        count_kmers_in_chunk(chunk, local_histogram);
+        
+        // Use chunk_id to determine if this is the first chunk
+        bool is_first_chunk = (chunk.chunk_id == 0);
+        count_kmers_in_chunk_with_boundaries(chunk, local_histogram, is_first_chunk);
     }
 }
 
 
-void progress_bar_task(const bool& is_production_finished) {
-    while (!is_production_finished) {
+void progress_bar_task(ParallelFastaReader& reader) {
+    g_file_size = reader.getFileSize();
+    
+    while (!production_finished.load() || active_producers.load() > 0) {
         size_t file_size = g_file_size.load();
-        size_t bytes_processed = g_bytes_processed.load();
+        size_t bytes_processed = reader.getBytesProcessed();
 
         if (file_size == 0) {
             this_thread::sleep_for(chrono::milliseconds(50));
@@ -101,37 +107,53 @@ void progress_bar_task(const bool& is_production_finished) {
 }
 
 
+
 void run_cpu_pipeline(const std::string& filepath) {
-    cout << "Starting 8-mer counting on " << filepath << endl;
+    cout << "Starting PARALLEL 8-mer counting on " << filepath << endl;
     auto start_time = chrono::high_resolution_clock::now();
 
-    // The reader is created here and used exclusively by the producer thread.
-    FastaStreamReader reader(filepath);
+    // Create parallel reader
+    ParallelFastaReader reader(filepath);
 
-    const unsigned int num_threads = thread::hardware_concurrency();
-    cout << "Using " << num_threads << " consumer threads." << endl;
+    const unsigned int total_threads = thread::hardware_concurrency();
+    const unsigned int producer_threads = max(2u, total_threads / 2);  // Use half threads as producers
+    const unsigned int consumer_threads = total_threads - producer_threads;
+    
+    cout << "Using " << producer_threads << " producer threads and " 
+         << consumer_threads << " consumer threads." << endl;
 
-    vector<thread> consumer_threads;
-    vector<Histogram> local_histograms(num_threads, Histogram(1 << (K_MER_SIZE * 2), 0));
+    vector<thread> producer_threads_vec;
+    vector<thread> consumer_threads_vec;
+    vector<Histogram> local_histograms(consumer_threads, Histogram(1 << (K_MER_SIZE * 2), 0));
 
     // Reset global state for this run.
     production_finished = false;
+    active_producers = producer_threads;
     g_bytes_processed = 0;
-    g_file_size = 0;
+    g_file_size = reader.getFileSize();
     while(!chunk_queue.empty()) chunk_queue.pop();
 
-    // Create and start the producer, consumer, and progress bar threads.
-    thread producer(producer_task, ref(reader));
-    thread progress_thread(progress_bar_task, ref(production_finished));
+    // Start progress bar thread
+    thread progress_thread(progress_bar_task, ref(reader));
 
-    for (unsigned int i = 0; i < num_threads; ++i) {
-        consumer_threads.emplace_back(consumer_task, ref(local_histograms[i]));
+    // Start producer threads
+    for (unsigned int i = 0; i < producer_threads; ++i) {
+        producer_threads_vec.emplace_back(producer_task, ref(reader), i);
     }
 
-    // Wait for all threads to complete their work.
-    producer.join();
+    // Start consumer threads
+    for (unsigned int i = 0; i < consumer_threads; ++i) {
+        consumer_threads_vec.emplace_back(consumer_task, ref(local_histograms[i]));
+    }
+
+    // Wait for all threads to complete
+    for (auto& t : producer_threads_vec) {
+        t.join();
+    }
+    
     progress_thread.join();
-    for (auto& t : consumer_threads) {
+    
+    for (auto& t : consumer_threads_vec) {
         t.join();
     }
 
