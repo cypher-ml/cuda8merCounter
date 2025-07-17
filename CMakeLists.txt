@@ -41,7 +41,7 @@ if(BUILD_GPU)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     
     # Updated architectures for newer GPUs (you can adjust based on your target hardware)
-    set(CMAKE_CUDA_ARCHITECTURES "70;75;80;86;89;90")
+    set(CMAKE_CUDA_ARCHITECTURES "75;80;86;89;90")
     
     # Optimized CUDA flags for CUDA 12.9
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math --extended-lambda --expt-relaxed-constexpr")
