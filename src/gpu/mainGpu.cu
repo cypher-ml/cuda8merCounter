@@ -7,7 +7,8 @@
 #include <chrono>
 #include <vector>
 #include <thread>
-
+#include <algorithm>
+#include <cuda_runtime.h>
 
 // Bring in your custom using namespace std
 using namespace std;
@@ -43,16 +44,16 @@ void run_gpu_pipeline(const string& filepath) {
     const int num_streams = 2; 
 
     // === Device Memory Allocation ===
-    uint64_t* d_histogram;
+    unsigned long long* d_histogram; // Changed to unsigned long long
     const size_t histogram_size = (1 << (FastaUtils::K_MER_SIZE * 2));
-    cudaMalloc(&d_histogram, histogram_size * sizeof(uint64_t));
-    cudaMemset(d_histogram, 0, histogram_size * sizeof(uint64_t));
+    cudaMalloc(&d_histogram, histogram_size * sizeof(unsigned long long));
+    cudaMemset(d_histogram, 0, histogram_size * sizeof(unsigned long long));
 
     uint8_t* d_buffers[num_streams];
     cudaStream_t streams[num_streams];
     
     ParallelFastaReader reader(filepath); // The reader for producers
-    size_t chunk_size_bytes = (16 * 1024 * 1024) / FastaUtils::BASES_PER_BYTE; // Example chunk size
+    size_t chunk_size_bytes = (16 * 1024 * 1024); 
 
     for (int i = 0; i < num_streams; ++i) {
         cudaStreamCreate(&streams[i]);
@@ -109,15 +110,15 @@ void run_gpu_pipeline(const string& filepath) {
     cout << "Aggregation and computation finished." << endl;
 
     // === Results Processing ===
-    vector<uint64_t> h_histogram(histogram_size);
-    cudaMemcpy(h_histogram.data(), d_histogram, histogram_size * sizeof(uint64_t), cudaMemcpyDeviceToHost);
+    vector<unsigned long long> h_histogram(histogram_size); // Changed to unsigned long long
+    cudaMemcpy(h_histogram.data(), d_histogram, histogram_size * sizeof(unsigned long long), cudaMemcpyDeviceToHost);
     
     auto duration = chrono::duration_cast<chrono::seconds>(end_time - start_time);
     cout << "Total execution time: " << duration.count() << " seconds." << endl;
 
     // Display top 20 (same as your CPU code)
     cout << "\n--- Top 20 Most Frequent 8-mers ---" << endl;
-    vector<pair<uint64_t, uint16_t>> sorted_counts;
+    vector<pair<unsigned long long, uint16_t>> sorted_counts; // Changed to unsigned long long
     for (size_t i = 0; i < h_histogram.size(); ++i) {
         if (h_histogram[i] > 0) {
             sorted_counts.push_back({h_histogram[i], static_cast<uint16_t>(i)});

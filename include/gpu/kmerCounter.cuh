@@ -6,7 +6,7 @@
 // d_ is a common prefix for device (GPU) pointers
 __global__ void count_kmers_kernel(const uint8_t* d_encoded_data, 
                                    size_t total_bases, 
-                                   uint64_t* d_histogram) {
+                                   unsigned long long* d_histogram) { // Changed to unsigned long long
     
     using namespace FastaUtils;
     
@@ -30,7 +30,7 @@ __global__ void count_kmers_kernel(const uint8_t* d_encoded_data,
             kmer_bit_buffer = (kmer_bit_buffer << BITS_PER_BASE) | base_code;
         }
 
-        // Use atomicAdd to safely increment the counter for this k-mer
-        atomicAdd(&d_histogram[kmer_bit_buffer], 1);
+        // Use atomicAdd with the correct types: unsigned long long* and unsigned long long
+        atomicAdd(&d_histogram[kmer_bit_buffer], 1ULL);
     }
 }
