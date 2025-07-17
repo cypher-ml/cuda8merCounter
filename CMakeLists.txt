@@ -21,6 +21,7 @@ add_executable(cpu_kmer_counter
     src/cpu/kmerCounter.cpp
     src/utils/fastaParser.cpp
     src/cpu/cpuPipeline.cpp 
+    src/utils/out.cpp
 )
 
 target_link_libraries(cpu_kmer_counter PRIVATE Threads::Threads)

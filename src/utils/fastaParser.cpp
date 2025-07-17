@@ -1,4 +1,5 @@
 #include "utils/fastaParser.hpp"
+#include "utils/constants.hpp"
 #include <iostream>
 #include <stdexcept>
 
@@ -21,17 +22,21 @@ ParallelFastaReader::ParallelFastaReader(const string& filepath, size_t chunk_si
     m_total_chunks = (m_file_size + chunk_size_bytes - 1) / chunk_size_bytes;
 }
 
+
 bool ParallelFastaReader::isFinished() const {
     return m_next_chunk_id >= m_total_chunks;
 }
+
 
 size_t ParallelFastaReader::getFileSize() const {
     return m_file_size;
 }
 
+
 size_t ParallelFastaReader::getBytesProcessed() const {
     return m_bytes_processed.load();
 }
+
 
 pair<size_t, size_t> ParallelFastaReader::getChunkBoundaries(size_t chunk_id) const {
     size_t chunk_size_bytes = m_chunk_size_bases / FastaUtils::BASES_PER_BYTE;
@@ -39,12 +44,13 @@ pair<size_t, size_t> ParallelFastaReader::getChunkBoundaries(size_t chunk_id) co
     size_t end_pos = min(start_pos + chunk_size_bytes, m_file_size);
     
     // For chunks after the first, back up by K_MER_SIZE-1 to handle overlaps
-    if (chunk_id > 0 && start_pos >= (K_MER_SIZE - 1)) {
-        start_pos -= (K_MER_SIZE - 1);
+    if (chunk_id > 0 && start_pos >= (FastaUtils::K_MER_SIZE - 1)) {
+        start_pos -= (FastaUtils::K_MER_SIZE - 1);
     }
     
     return {start_pos, end_pos};
 }
+
 
 EncodedChunk ParallelFastaReader::readNextChunk() {
     // Get the next chunk ID atomically
@@ -65,10 +71,10 @@ EncodedChunk ParallelFastaReader::readNextChunk() {
     bool needs_overlap = false;
     size_t overlap_bases = 0;
     
-    if (chunk_id > 0 && start_pos >= (K_MER_SIZE - 1)) {
-        read_start_pos = start_pos - (K_MER_SIZE - 1);
+    if (chunk_id > 0 && start_pos >= (FastaUtils::K_MER_SIZE - 1)) {
+        read_start_pos = start_pos - (FastaUtils::K_MER_SIZE - 1);
         needs_overlap = true;
-        overlap_bases = K_MER_SIZE - 1;
+        overlap_bases = FastaUtils::K_MER_SIZE - 1;
     }
     
     // Open thread-local file handle
@@ -153,37 +159,4 @@ EncodedChunk ParallelFastaReader::readNextChunk() {
     // Return chunk with the total bases read (including overlap for proper k-mer processing)
     // but the chunk_id helps track which chunk this is
     return {std::move(encoded_data), total_bases_read, chunk_id};
-}
-
-
-
-std::string FastaUtils::decode_kmer(uint16_t kmer_index) {
-    static const std::array<char, 4> DECODING_LUT = {'A', 'C', 'G', 'T'};
-    std::string kmer_str(K_MER_SIZE, ' ');
-    
-    for (int i = K_MER_SIZE - 1; i >= 0; --i) {
-        uint8_t base_code = kmer_index & BASE_MASK; 
-        kmer_str[i] = DECODING_LUT[base_code];
-        
-        kmer_index >>= BITS_PER_BASE; 
-    }
-    return kmer_str;
-}
-
-void FastaUtils::save_histogram_to_tsv(const Histogram& histogram, const std::string& filepath) {
-    cout << "\nSaving full histogram to " << filepath << "..." << endl;
-    ofstream out_file(filepath);
-    if (!out_file) {
-        cerr << "Error: Could not open file for writing: " << filepath << endl;
-        return;
-    }
-
-    out_file << "k-mer\tcount\n";
-
-    for (size_t i = 0; i < histogram.size(); ++i) {
-        if (histogram[i] > 0) {
-            out_file << FastaUtils::decode_kmer(i) << "\t" << histogram[i] << "\n";
-        }
-    }
-    cout << "Finished saving histogram." << endl;
 }
