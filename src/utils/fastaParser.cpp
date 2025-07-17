@@ -2,10 +2,8 @@
 #include <iostream>
 #include <stdexcept>
 
-// Per your request, this file also uses the std namespace.
 using namespace std;
 
-// --- FastaStreamReader Implementation ---
 
 FastaStreamReader::FastaStreamReader(const string& filepath, size_t chunk_size_bases)
     : m_chunk_size_bases(chunk_size_bases) {
@@ -20,9 +18,11 @@ FastaStreamReader::FastaStreamReader(const string& filepath, size_t chunk_size_b
     }
 }
 
+
 bool FastaStreamReader::isFinished() const {
     return m_is_finished;
 }
+
 
 EncodedChunk FastaStreamReader::readNextChunk() {
     if (m_is_finished) {
@@ -30,11 +30,8 @@ EncodedChunk FastaStreamReader::readNextChunk() {
     }
 
     vector<uint8_t> encoded_data;
-    // Reserve memory for the chunk + overlap to reduce reallocations.
     encoded_data.reserve(m_chunk_size_bases / FastaUtils::BASES_PER_BYTE + K_MER_SIZE);
 
-    // CRITICAL: Prepend the overlap from the *previous* chunk.
-    // This ensures k-mers that span chunks are processed correctly.
     encoded_data.insert(encoded_data.end(), m_overlap_buffer.begin(), m_overlap_buffer.end());
     
     size_t bases_in_chunk = m_overlap_buffer.size() * FastaUtils::BASES_PER_BYTE;
@@ -60,19 +57,16 @@ EncodedChunk FastaStreamReader::readNextChunk() {
         }
     }
 
-    // Handle the very last bases in the file if they don't fill a whole byte.
     if (bases_in_byte > 0 && m_file.eof()) {
         packed_byte <<= (FastaUtils::BASES_PER_BYTE - bases_in_byte) * FastaUtils::BITS_PER_BASE;
         encoded_data.push_back(packed_byte);
     }
 
-    // If we read nothing and the file is at its end, we are done.
     if (bases_in_chunk == (m_overlap_buffer.size() * FastaUtils::BASES_PER_BYTE) && m_file.eof()) {
         m_is_finished = true;
         return {{}, 0};
     }
     
-    // Update the overlap buffer for the *next* call.
     m_overlap_buffer.clear();
     if (encoded_data.size() >= K_MER_SIZE - 1) {
         m_overlap_buffer.assign(encoded_data.end() - (K_MER_SIZE - 1), encoded_data.end());
@@ -91,12 +85,29 @@ std::string FastaUtils::decode_kmer(uint16_t kmer_index) {
     std::string kmer_str(K_MER_SIZE, ' ');
     
     for (int i = K_MER_SIZE - 1; i >= 0; --i) {
-        // Get the 2-bit code for the current base.
-        uint8_t base_code = kmer_index & BASE_MASK; // BASE_MASK is 0b11
+        uint8_t base_code = kmer_index & BASE_MASK; 
         kmer_str[i] = DECODING_LUT[base_code];
         
-        // Move to the next base.
-        kmer_index >>= BITS_PER_BASE; // BITS_PER_BASE is 2
+        kmer_index >>= BITS_PER_BASE; 
     }
     return kmer_str;
+}
+
+
+void FastaUtils::save_histogram_to_tsv(const Histogram& histogram, const std::string& filepath) {
+    cout << "\nSaving full histogram to " << filepath << "..." << endl;
+    ofstream out_file(filepath);
+    if (!out_file) {
+        cerr << "Error: Could not open file for writing: " << filepath << endl;
+        return;
+    }
+
+    out_file << "k-mer\tcount\n";
+
+    for (size_t i = 0; i < histogram.size(); ++i) {
+        if (histogram[i] > 0) {
+            out_file << FastaUtils::decode_kmer(i) << "\t" << histogram[i] << "\n";
+        }
+    }
+    cout << "Finished saving histogram." << endl;
 }
