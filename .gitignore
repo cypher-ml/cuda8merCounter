@@ -1,5 +1,7 @@
 *.fa
 
+test_*.cpp
+
 .DS_Store
 
 *.o
