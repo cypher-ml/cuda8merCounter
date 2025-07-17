@@ -1,6 +1,7 @@
 *.fa
 
 test_*.cpp
+debug*
 
 .DS_Store
 
