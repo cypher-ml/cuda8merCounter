@@ -28,7 +28,7 @@ void producer_task(ParallelFastaReader& reader, size_t producer_id) {
     }
 }
 
-#ifndef __CUDACC__
+#ifndef IS_GPU_BUILD
 void consumer_task(Histogram& local_histogram) {
     while (true) {
         EncodedChunk chunk;
@@ -49,7 +49,7 @@ void consumer_task(Histogram& local_histogram) {
         count_kmers_in_chunk_with_boundaries(chunk, local_histogram, is_first_chunk);
     }
 }
-#endif // __CUDACC__
+#endif // IS_GPU_BUILD
 
 void progress_bar_task(ParallelFastaReader& reader) {
     Threading::g_file_size = reader.getFileSize();
