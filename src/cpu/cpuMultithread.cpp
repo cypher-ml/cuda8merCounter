@@ -1,7 +1,5 @@
-#include "cpu/cpu_multithread.hpp"
+#include "cpu/cpuMultithread.hpp"
 #include <iostream>
-#include <thread>
-#include <queue>
 
 
 using namespace std;

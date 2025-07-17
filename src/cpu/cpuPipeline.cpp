@@ -2,12 +2,9 @@
 #include "cpu/kmerCounter.hpp"
 #include "utils/fastaParser.hpp"
 #include "utils/constants.hpp"
-#include "cpu/cpu_multithread.hpp"
+#include "cpu/cpuMultithread.hpp"
 
 #include <iostream>
-#include <queue>
-#include <thread>
-#include <condition_variable>
 #include <chrono>
 #include <algorithm>
 #include <utility>
