@@ -33,15 +33,19 @@ set(GPU_SOURCES
 )
 
 if(BUILD_GPU)
-    project(kmer_counter_gpu LANGUAGES CXX CUDA)
-    set(CMAKE_CUDA_STANDARD 20)
-    set(CMAKE_CUDA_ARCHITECTURES "70;75;80;86;90")
     message(STATUS "Configuring for GPU build...")
+
+    enable_language(CUDA)
+    
+    set(CMAKE_CUDA_STANDARD 20)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    set(CMAKE_CUDA_EXTENSIONS OFF)
+
+    set(CMAKE_CUDA_ARCHITECTURES "70;75;80;86;90")
     add_executable(gpu_kmer_counter ${GPU_SOURCES})
     target_link_libraries(gpu_kmer_counter PRIVATE Threads::Threads)
 
 else()
-    project(kmer_counter_cpu LANGUAGES CXX)
     message(STATUS "Configuring for CPU-only build...")
     add_executable(cpu_kmer_counter ${CPU_SOURCES})
     target_link_libraries(cpu_kmer_counter PRIVATE Threads::Threads)
