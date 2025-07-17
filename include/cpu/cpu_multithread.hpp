@@ -3,8 +3,6 @@
 #include "utils/fastaParser.hpp" 
 #include "cpu/kmerCounter.hpp" 
 
-using namespace std;
-
 
 namespace Threading{
     queue<EncodedChunk> chunk_queue;
@@ -15,6 +13,10 @@ namespace Threading{
 
     atomic<size_t> g_bytes_processed(0);
     atomic<size_t> g_file_size(0);
+
+    const unsigned int total_threads = thread::hardware_concurrency();
+    const unsigned int producer_threads = max(2u, total_threads / 2);  // Use half threads as producers
+    const unsigned int consumer_threads = total_threads - producer_threads;
 }
 
 
