@@ -22,21 +22,22 @@ FastaStreamReader::FastaStreamReader(const string& filepath, size_t chunk_size_b
 }
 
 
-bool FastaStreamReader::isFinished() const {
+bool FastaStreamReader::is_finished() const {
     return m_is_finished;
 }
 
 
-size_t FastaStreamReader::getFileSize() const {
+size_t FastaStreamReader::get_file_size() const {
     return m_file_size;
 }
 
-size_t FastaStreamReader::getBytesProcessed() const {
+
+size_t FastaStreamReader::get_bytes_processed() const {
     return m_current_pos;
 }
 
 
-EncodedChunk FastaStreamReader::readNextChunk() {
+EncodedChunk FastaStreamReader::read_next_chunk() {
     if (m_is_finished) {
         return {{}, 0};
     }

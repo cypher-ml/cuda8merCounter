@@ -30,12 +30,12 @@ namespace {
 
 
 void producer_task(FastaStreamReader& reader) {
-    g_file_size = reader.getFileSize();
+    g_file_size = reader.get_file_size();
 
-    while (!reader.isFinished()) {
-        EncodedChunk chunk = reader.readNextChunk();
+    while (!reader.is_finished()) {
+        EncodedChunk chunk = reader.read_next_chunk();
         
-        g_bytes_processed = reader.getBytesProcessed();
+        g_bytes_processed = reader.get_bytes_processed();
 
         if (!chunk.data.empty()) {
             {

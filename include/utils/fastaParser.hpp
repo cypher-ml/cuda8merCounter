@@ -43,10 +43,10 @@ class FastaStreamReader {
 public:
     explicit FastaStreamReader(const std::string& filepath, size_t chunk_size_bases = 16 * 1024 * 1024);
 
-    EncodedChunk readNextChunk();
-    bool isFinished() const;
-    size_t getFileSize() const;
-    size_t getBytesProcessed() const;
+    EncodedChunk read_next_chunk();
+    bool is_finished() const;
+    size_t get_file_size() const;
+    size_t get_bytes_processed() const;
 
 private:
     static constexpr std::array<uint8_t, 256> ENCODING_LUT = FastaUtils::create_encoding_lut(); 
