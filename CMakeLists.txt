@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 project(kmer_counter LANGUAGES CXX)
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -49,7 +49,7 @@ if(BUILD_GPU)
     
     # Ensure C++ files in the GPU build use C++23, CUDA files use C++20
     set_target_properties(gpu_kmer_counter PROPERTIES
-        CXX_STANDARD 23
+        CXX_STANDARD 20
         CUDA_STANDARD 20
         CUDA_SEPARABLE_COMPILATION ON
     )
