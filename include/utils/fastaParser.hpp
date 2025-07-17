@@ -33,7 +33,7 @@ namespace FastaUtils {
         return table;
     }
 
-    std::string decode_kmer(uint16_t kmer_index);
+    std::string decode_kmer(const uint16_t kmer_index);
 
     void save_histogram_to_tsv(const Histogram& histogram, const std::string& filepath);
 }
