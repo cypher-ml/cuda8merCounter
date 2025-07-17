@@ -20,10 +20,8 @@ void producer_task(ParallelFastaReader& reader, size_t producer_id) {
         }
     }
     
-    // Decrement active producers count
     size_t remaining = Threading::active_producers.fetch_sub(1) - 1;
     
-    // If this was the last producer, signal completion
     if (remaining == 0) {
         lock_guard<mutex> lock(Threading::queue_mutex);
         Threading::production_finished = true;

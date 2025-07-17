@@ -1,9 +1,8 @@
 #pragma once
 
-#include "utils/fastaParser.hpp"      // For ParallelFastaReader, EncodedChunk, Histogram
-#include "cpu/kmerCounter.hpp"        // For count_kmers_in_chunk_with_boundaries
+#include "utils/fastaParser.hpp" 
+#include "cpu/kmerCounter.hpp" 
 
-// Always use using namespace std!
 using namespace std;
 
 
@@ -19,7 +18,6 @@ namespace Threading{
 }
 
 
-// Declarations of the multithreaded tasks
 void producer_task(ParallelFastaReader& reader, size_t producer_id);
 void consumer_task(Histogram& local_histogram);
 void progress_bar_task(ParallelFastaReader& reader);

@@ -9,7 +9,6 @@ using namespace std;
 ParallelFastaReader::ParallelFastaReader(const string& filepath, size_t chunk_size_bases)
     : m_filepath(filepath), m_chunk_size_bases(chunk_size_bases) {
     
-    // Get file size
     ifstream file(filepath, ios::binary | ios::ate);
     if (!file.is_open()) {
         throw runtime_error("Error: Could not open file " + filepath);
@@ -17,7 +16,6 @@ ParallelFastaReader::ParallelFastaReader(const string& filepath, size_t chunk_si
     m_file_size = file.tellg();
     file.close();
     
-    // Calculate total number of chunks
     size_t chunk_size_bytes = m_chunk_size_bases / FastaUtils::BASES_PER_BYTE;
     m_total_chunks = (m_file_size + chunk_size_bytes - 1) / chunk_size_bytes;
 }
@@ -43,7 +41,6 @@ pair<size_t, size_t> ParallelFastaReader::getChunkBoundaries(size_t chunk_id) co
     size_t start_pos = chunk_id * chunk_size_bytes;
     size_t end_pos = min(start_pos + chunk_size_bytes, m_file_size);
     
-    // For chunks after the first, back up by K_MER_SIZE-1 to handle overlaps
     if (chunk_id > 0 && start_pos >= (FastaUtils::K_MER_SIZE - 1)) {
         start_pos -= (FastaUtils::K_MER_SIZE - 1);
     }
@@ -53,20 +50,16 @@ pair<size_t, size_t> ParallelFastaReader::getChunkBoundaries(size_t chunk_id) co
 
 
 EncodedChunk ParallelFastaReader::readNextChunk() {
-    // Get the next chunk ID atomically
     size_t chunk_id = m_next_chunk_id.fetch_add(1);
     
     if (chunk_id >= m_total_chunks) {
         return {{}, 0, chunk_id};
     }
     
-    // Calculate chunk boundaries WITHOUT overlap
     size_t chunk_size_bytes = m_chunk_size_bases / FastaUtils::BASES_PER_BYTE;
     size_t start_pos = chunk_id * chunk_size_bytes;
     size_t end_pos = min(start_pos + chunk_size_bytes, m_file_size);
     
-    // For chunks after the first, we need to read K_MER_SIZE-1 extra bases
-    // at the beginning to complete k-mers that span chunk boundaries
     size_t read_start_pos = start_pos;
     bool needs_overlap = false;
     size_t overlap_bases = 0;
@@ -77,7 +70,6 @@ EncodedChunk ParallelFastaReader::readNextChunk() {
         overlap_bases = FastaUtils::K_MER_SIZE - 1;
     }
     
-    // Open thread-local file handle
     ifstream file(m_filepath, ios::binary);
     if (!file.is_open()) {
         throw runtime_error("Error: Could not open file in thread");
@@ -85,14 +77,12 @@ EncodedChunk ParallelFastaReader::readNextChunk() {
     
     file.seekg(read_start_pos);
     
-    // Skip header if at beginning of file
     if (read_start_pos == 0 && file.peek() == '>') {
         string header_line;
         getline(file, header_line);
         read_start_pos = file.tellg();
     }
     
-    // Read and encode the chunk
     vector<uint8_t> encoded_data;
     encoded_data.reserve((end_pos - read_start_pos) / FastaUtils::BASES_PER_BYTE + 100);
     
@@ -123,16 +113,12 @@ EncodedChunk ParallelFastaReader::readNextChunk() {
             if (base_code != FastaUtils::INVALID_BASE_CODE) {
                 total_bases_read++;
                 
-                // Check if we're past the overlap region
                 if (in_overlap_region && total_bases_read > overlap_bases) {
                     in_overlap_region = false;
                 }
-                
-                // Count bases that are actually in this chunk (not overlap)
                 if (!in_overlap_region) {
                     bases_in_actual_chunk++;
                 }
-                
                 packed_byte = (packed_byte << FastaUtils::BITS_PER_BASE) | base_code;
                 bases_in_byte++;
                 
@@ -147,16 +133,12 @@ EncodedChunk ParallelFastaReader::readNextChunk() {
         current_pos += bytes_read;
     }
     
-    // Handle remaining bases
     if (bases_in_byte > 0) {
         packed_byte <<= (FastaUtils::BASES_PER_BYTE - bases_in_byte) * FastaUtils::BITS_PER_BASE;
         encoded_data.push_back(packed_byte);
     }
     
-    // Update bytes processed counter for progress bar
     m_bytes_processed.fetch_add(end_pos - start_pos);
     
-    // Return chunk with the total bases read (including overlap for proper k-mer processing)
-    // but the chunk_id helps track which chunk this is
     return {std::move(encoded_data), total_bases_read, chunk_id};
 }
