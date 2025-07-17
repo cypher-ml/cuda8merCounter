@@ -41,16 +41,20 @@ namespace FastaUtils {
 
 class FastaStreamReader {
 public:
-    explicit FastaStreamReader(const std::string& filepath, size_t chunk_size_bases = 4 * 1024 * 1024);
+    explicit FastaStreamReader(const std::string& filepath, size_t chunk_size_bases = 16 * 1024 * 1024);
 
     EncodedChunk readNextChunk();
     bool isFinished() const;
+    size_t getFileSize() const;
+    size_t getBytesProcessed() const;
 
 private:
     static constexpr std::array<uint8_t, 256> ENCODING_LUT = FastaUtils::create_encoding_lut(); 
 
-    std::ifstream m_file; 
-    size_t m_chunk_size_bases;
-    bool m_is_finished = false;
+    std::ifstream m_file;           
+    size_t m_chunk_size_bases;      
+    bool m_is_finished = false;     
     std::vector<uint8_t> m_overlap_buffer; 
+    size_t m_file_size = 0;         
+    size_t m_current_pos = 0;       
 };

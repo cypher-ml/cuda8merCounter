@@ -7,20 +7,32 @@ using namespace std;
 
 FastaStreamReader::FastaStreamReader(const string& filepath, size_t chunk_size_bases)
     : m_chunk_size_bases(chunk_size_bases) {
-    m_file.open(filepath, ios::binary);
+    m_file.open(filepath, ios::binary | ios::ate);
     if (!m_file.is_open()) {
         throw runtime_error("Error: Could not open file " + filepath);
     }
+    m_file_size = m_file.tellg(); 
+    m_file.seekg(0, ios::beg);   
 
     if (m_file.peek() == '>') {
         string header_line;
         getline(m_file, header_line);
     }
+    m_current_pos = m_file.tellg();
 }
 
 
 bool FastaStreamReader::isFinished() const {
     return m_is_finished;
+}
+
+
+size_t FastaStreamReader::getFileSize() const {
+    return m_file_size;
+}
+
+size_t FastaStreamReader::getBytesProcessed() const {
+    return m_current_pos;
 }
 
 
@@ -31,32 +43,43 @@ EncodedChunk FastaStreamReader::readNextChunk() {
 
     vector<uint8_t> encoded_data;
     encoded_data.reserve(m_chunk_size_bases / FastaUtils::BASES_PER_BYTE + K_MER_SIZE);
-
     encoded_data.insert(encoded_data.end(), m_overlap_buffer.begin(), m_overlap_buffer.end());
     
     size_t bases_in_chunk = m_overlap_buffer.size() * FastaUtils::BASES_PER_BYTE;
-
     uint8_t packed_byte = 0;
     int bases_in_byte = 0;
-    char c;
 
-    while (bases_in_chunk < m_chunk_size_bases && m_file.get(c)) {
-        const uint8_t base_code = ENCODING_LUT[static_cast<unsigned char>(c)];
+    const size_t read_buffer_size = 1024 * 1024;
+    vector<char> buffer(read_buffer_size);
 
-        if (base_code != FastaUtils::INVALID_BASE_CODE) {
-            bases_in_chunk++;
-            
-            packed_byte = (packed_byte << FastaUtils::BITS_PER_BASE) | base_code;
-            bases_in_byte++;
+    while (bases_in_chunk < m_chunk_size_bases && !m_file.eof()) {
+        m_file.read(buffer.data(), buffer.size());
+        size_t bytes_read = m_file.gcount();
 
-            if (bases_in_byte == FastaUtils::BASES_PER_BYTE) {
-                encoded_data.push_back(packed_byte);
-                packed_byte = 0;
-                bases_in_byte = 0;
+        if (bytes_read == 0) {
+            break;
+        }
+        for (size_t i = 0; i < bytes_read; ++i) {
+            const char c = buffer[i];
+            const uint8_t base_code = ENCODING_LUT[static_cast<unsigned char>(c)];
+
+            if (base_code != FastaUtils::INVALID_BASE_CODE) {
+                bases_in_chunk++;
+                
+                packed_byte = (packed_byte << FastaUtils::BITS_PER_BASE) | base_code;
+                bases_in_byte++;
+
+                if (bases_in_byte == FastaUtils::BASES_PER_BYTE) {
+                    encoded_data.push_back(packed_byte);
+                    packed_byte = 0;
+                    bases_in_byte = 0;
+                }
             }
         }
     }
 
+    m_current_pos = m_file.tellg();
+    
     if (bases_in_byte > 0 && m_file.eof()) {
         packed_byte <<= (FastaUtils::BASES_PER_BYTE - bases_in_byte) * FastaUtils::BITS_PER_BASE;
         encoded_data.push_back(packed_byte);
