@@ -22,6 +22,7 @@ set(COMMON_SOURCES
 set(CPU_SOURCES
     src/cpu/mainCpu.cpp
     src/cpu/cpuMultithread.cpp
+    src/cpu/cpuConsumer.cpp
     src/cpu/cpuPipeline.cpp
     src/cpu/kmerCounter.cpp
     ${COMMON_SOURCES}

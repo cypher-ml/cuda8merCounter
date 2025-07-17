@@ -28,28 +28,6 @@ void producer_task(ParallelFastaReader& reader, size_t producer_id) {
     }
 }
 
-#ifndef IS_GPU_BUILD
-void consumer_task(Histogram& local_histogram) {
-    while (true) {
-        EncodedChunk chunk;
-        {
-            unique_lock<mutex> lock(Threading::queue_mutex);
-            Threading::cv.wait(lock, []{ return !Threading::chunk_queue.empty() || Threading::production_finished.load(); });
-
-            if (Threading::chunk_queue.empty() && Threading::production_finished.load()) {
-                return;
-            }
-
-            chunk = std::move(Threading::chunk_queue.front());
-            Threading::chunk_queue.pop();
-        }
-        
-        // Use chunk_id to determine if this is the first chunk
-        bool is_first_chunk = (chunk.chunk_id == 0);
-        count_kmers_in_chunk_with_boundaries(chunk, local_histogram, is_first_chunk);
-    }
-}
-#endif // IS_GPU_BUILD
 
 void progress_bar_task(ParallelFastaReader& reader) {
     Threading::g_file_size = reader.getFileSize();
