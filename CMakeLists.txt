@@ -36,10 +36,8 @@ if(BUILD_GPU)
     message(STATUS "Configuring for GPU build...")
 
     enable_language(CUDA)
-    
-    set(CMAKE_CUDA_STANDARD 20)
-    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-    set(CMAKE_CUDA_EXTENSIONS OFF)
+
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++20")
 
     set(CMAKE_CUDA_ARCHITECTURES "70;75;80;86;90")
     add_executable(gpu_kmer_counter ${GPU_SOURCES})
