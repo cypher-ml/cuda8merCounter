@@ -64,10 +64,10 @@ After building, you can run the desired version from the project's root director
 
 ```bash
 # Run the multi-threaded CPU version
-./bin/cpu_kmer_counter ./exampleData/hg38.fa
+./cpu_kmer_counter ./exampleData/hg38.fa
 
 # Run the GPU-accelerated version
-./bin/gpu_kmer_counter ./exampleData/hg38.fa
+./gpu_kmer_counter ./exampleData/hg38.fa
 
 Technical Report
 1. K-mer Encoding Method
@@ -108,31 +108,29 @@ The core challenge in parallel counting is handling simultaneous writes to the s
 
 4. CPU vs. GPU Performance Comparison
 
-(This section should be filled with your final timing results.)
+The performance benchmarks were run on the following hardware:
 
-Task
+* **CPU**:
+    * **Model**: INTEL(R) XEON(R) GOLD 6548Y+
+    * **Cores**: 8
+    * **Threads per Core**: 1
+
+* **GPU**:
+    * **Model**: NVIDIA RTX 4000 Ada Generation
+    * **VRAM**: 20 GB
+    * **CUDA Version**: 12.9
+    * **Driver Version**: 575.57.08
+
+
+CPU Time (7 seconds)
 	
-
-CPU Time (seconds)
+GPU Time (2 seconds)
 	
+Speedup Factor > 2
 
-GPU Time (seconds)
-	
-
-Speedup Factor
-
-8-mer Counting
-	
-
-XX.X
-	
-
-YY.Y
-	
-
-~Z.Zx
 
 The results clearly demonstrate the massive parallelism of the GPU, which provides a significant speedup over the multi-threaded CPU implementation for this compute-bound task.
+
 5. Optimizations and Potential Improvements
 
     Implemented Optimization: The producer-consumer pipeline with asynchronous operations is the key optimization, effectively hiding I/O latency and keeping the GPU saturated.
