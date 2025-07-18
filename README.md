@@ -139,6 +139,30 @@ Speedup is not huge, this is due to the bottleneck of the task being I/O. Speedu
 
 In `stats/` folder, you can find cuda profiling stat dumps for details.
 
+---
+
+### 4.1. CPU Threading Analysis (Producer-Consumer Balance)
+
+The CPU implementation uses a multi-threaded producer-consumer model to separate file I/O (producers) from k-mer counting (consumers). The key to maximizing performance in this model is to correctly balance the number of threads allocated to each task, especially since reading and decoding the FASTA file is the primary **I/O bottleneck**.
+
+To analyze this balance, we ran the CPU-only version with different thread allocations on an Apple M4 system. The visualizations below show thread utilization for three different configurations:
+
+1.  **4 Producers, 8 Consumers**: With fewer threads allocated to I/O, the consumer threads likely spend significant time idle, waiting for the producers to fill the data queue.
+
+    ![4 Producers, 8 Consumers](stats/threadUtilization_4producer8consumer.png)
+
+2.  **6 Producers, 6 Consumers**: Increasing the number of producers improves the rate at which data is fed into the pipeline. This leads to better utilization of the consumer threads compared to the previous configuration.
+
+    ![6 Producers, 8 Consumers](stats/threadUtilization_6producer6consumer.png)
+
+3.  **8 Producers, 4 Consumers**: This configuration allocates the majority of threads to the bottleneck task (I/O). This ensures the data queue remains full, allowing the consumer threads to work continuously without stalling. This setup yields the highest throughput by keeping all parts of the pipeline active.
+
+    ![8 Producers, 4 Consumers](stats/threadUtilization_8producer4consumer.png)
+
+**Conclusion**: The results demonstrate that for a pipeline with a significant I/O bottleneck, performance is gained by dedicating more hardware resources (in this case, threads) to the slowest stage. Over-allocating threads to the faster, CPU-bound consumer stage results in diminishing returns as they become starved for data.
+
+---
+
 
 5. Optimizations and Potential Improvements
 
