@@ -5,14 +5,28 @@
 #include <atomic>
 #include <mutex>
 
-
+/**
+ * @struct EncodedChunk
+ * @brief Represents a chunk of the FASTA file that has been encoded.
+ * @details This struct holds the 2-bit encoded sequence data, the number of
+ * valid bases in the chunk, and a unique identifier for the chunk.
+ */
 struct EncodedChunk {
     std::vector<uint8_t> data;
     size_t base_count;
     size_t chunk_id;  
 };
 
-
+/**
+ * @class ParallelFastaReader
+ * @brief Reads a FASTA file in parallel chunks for high-performance processing.
+ * @details This class is designed to be thread-safe, allowing multiple producer
+ * threads to read different sections of a large FASTA file simultaneously.
+ * It handles file I/O, strips non-standard characters, and encodes
+ * bases into a compact 2-bit format. It also manages chunk boundaries
+ * to ensure k-mers spanning across chunks are handled correctly by
+ * prepending an overlap of K-1 bases.
+ */
 class ParallelFastaReader {
 public:
     explicit ParallelFastaReader(const std::string& filepath, size_t chunk_size_bases = 16 * 1024 * 1024);

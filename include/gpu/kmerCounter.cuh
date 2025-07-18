@@ -3,6 +3,21 @@
 #include "utils/constants.hpp"
 #include <cstdint>
 
+/**
+ * @brief CUDA kernel to count 8-mers in parallel on the GPU.
+ * @details Each thread in the grid processes a subset of the possible k-mer starting
+ * positions in the sequence. It constructs the 8-mer, calculates its
+ * corresponding index, and uses an atomic operation (atomicAdd) to safely
+ * increment the count in the global histogram. The kernel handles chunk
+ * boundaries by adjusting its starting position to avoid double-counting
+ * k-mers from the overlap region.
+ *
+ * @param d_encoded_data Pointer to the encoded sequence data in GPU global memory.
+ * @param total_bases The total number of valid bases in the sequence data.
+ * @param d_histogram Pointer to the global histogram in GPU memory where counts are stored.
+ * @param is_first_chunk A boolean flag. If false, the kernel skips the first K-1 bases
+ * to avoid recounting k-mers from the chunk overlap.
+ */
 __global__ void count_kmers_kernel(const uint8_t* d_encoded_data,
                                   size_t total_bases,
                                   unsigned long long* d_histogram,
