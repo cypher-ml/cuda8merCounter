@@ -31,6 +31,7 @@ void setup_gpu_resources(
     }
 }
 
+
 void process_chunks_on_gpu(
     ParallelFastaReader& reader,
     unsigned long long* d_histogram,
@@ -39,25 +40,43 @@ void process_chunks_on_gpu(
     int num_streams
 ) {
     int current_stream = 0;
+    static size_t global_position = 0;  // Track global position across all chunks
+    static bool first_chunk = true;
+    
     while (true) {
         unique_lock<mutex> lock(Threading::queue_mutex);
-        Threading::cv.wait(lock, [] { return !Threading::chunk_queue.empty() || Threading::production_finished.load(); });
-
+        Threading::cv.wait(lock, [] { 
+            return !Threading::chunk_queue.empty() || Threading::production_finished.load(); 
+        });
+        
         if (Threading::chunk_queue.empty() && Threading::production_finished.load()) {
             break;
         }
-
+        
         EncodedChunk chunk = move(Threading::chunk_queue.front());
         Threading::chunk_queue.pop();
         lock.unlock();
-
+        
         // Async Copy Host -> Device
-        cudaMemcpyAsync(d_buffers[current_stream], chunk.data.data(), chunk.data.size() * sizeof(uint8_t), cudaMemcpyHostToDevice, streams[current_stream]);
-
-        // Launch Kernel
+        cudaMemcpyAsync(d_buffers[current_stream], chunk.data.data(), 
+                       chunk.data.size() * sizeof(uint8_t), 
+                       cudaMemcpyHostToDevice, streams[current_stream]);
+        
+        // Launch Kernel with boundary information
         int threads_per_block = 256;
         int blocks_per_grid = (chunk.base_count + threads_per_block - 1) / threads_per_block;
-        count_kmers_kernel<<<blocks_per_grid, threads_per_block, 0, streams[current_stream]>>>(d_buffers[current_stream], chunk.base_count, d_histogram);
+        
+        count_kmers_kernel<<<blocks_per_grid, threads_per_block, 0, streams[current_stream]>>>(
+            d_buffers[current_stream], 
+            chunk.base_count, 
+            d_histogram,
+            global_position,     // Global position for this chunk
+            first_chunk         // Is this the first chunk?
+        );
+        
+        // Update global position and first_chunk flag
+        global_position += chunk.base_count;
+        first_chunk = false;
         
         current_stream = (current_stream + 1) % num_streams;
     }
