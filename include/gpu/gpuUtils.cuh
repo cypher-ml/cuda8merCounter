@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fastaParser.hpp"
+#include "utils/fastaParser.hpp"
 #include <string>
 #include <vector>
 #include <cstdint>
