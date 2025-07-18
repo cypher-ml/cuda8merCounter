@@ -1,5 +1,8 @@
-# CUDA 8-mer Frequency Analysis in the Human Genome: Final Submission  This document contains the complete source code, build scripts, and technical report for the CUDA 8-mer Frequency Analysis project.  ---  ## 1. Project Overview and Instructions (`README.md`)  ### Project Summary This project implements a high-performance, parallel 8-mer counter for large-scale genomic data using CUDA. It includes a multi-threaded CPU version for baseline comparison and a GPU-accelerated version for massive speedup. The implementation follows a producer-consumer model to efficiently handle file I/O and computation.  ### Project Structure 
+# CUDA 8-mer Frequency Analysis in the Human Genome:
 
+## 1. Project Overview and Instructions (`README.md`)
+
+### Project Summary This project implements a high-performance, parallel 8-mer counter for large-scale genomic data using CUDA. It includes a multi-threaded CPU version for baseline comparison and a GPU-accelerated version for speedup. The implementation follows a producer-consumer model to efficiently handle file I/O and computation.
 
 ### How to Set Up and Run
 
