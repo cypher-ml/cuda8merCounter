@@ -26,7 +26,7 @@ Follow these steps to download the data, build the project, and run the analysis
 
 #### Step 0: Clone the repo
 
-Clone the library `https://github.com/cypher-ml/cuda8merCounter.git`
+Clone the library `git clone https://github.com/cypher-ml/cuda8merCounter.git`
 
 #### Step 1: Download Example Data
 
