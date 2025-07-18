@@ -24,6 +24,10 @@ Follow these steps to download the data, build the project, and run the analysis
 * **wget**: The `downloadHG38fasta.sh` script uses `wget` to download the human reference genome.
 * **gunzip**: This is used by the same script to decompress the downloaded genome file (`.fa.gz`).
 
+#### Step 0: Clone the repo
+
+Clone the library `https://github.com/cypher-ml/cuda8merCounter.git`
+
 #### Step 1: Download Example Data
 
 A script is provided to download the human reference genome (`hg38.fa`) required for the analysis.
