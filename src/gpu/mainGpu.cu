@@ -1,6 +1,6 @@
 #include "utils/fastaParser.hpp"
 #include "cpu/cpuMultithread.hpp" 
-#include "gpu/gpuPipeline.cuh"
+#include "gpu/gpuUtils.cuh"
 #include "utils/constants.hpp"
 
 #include <iostream>
