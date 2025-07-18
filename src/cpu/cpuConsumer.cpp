@@ -25,6 +25,6 @@ void consumer_task(vector<uint64_t>& total_counts) {
         Threading::chunk_queue.pop();
         lock.unlock();
 
-        count_kmers_in_chunk_with_boundaries(chunk, total_counts, false);
+        count_kmers_in_chunk_with_boundaries(chunk, total_counts, chunk.chunk_id == 0);
     }
 }
