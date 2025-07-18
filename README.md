@@ -68,6 +68,7 @@ After building, you can run the desired version from the project's root director
 
 # Run the GPU-accelerated version
 ./gpu_kmer_counter ./exampleData/hg38.fa
+```
 
 Technical Report
 1. K-mer Encoding Method
