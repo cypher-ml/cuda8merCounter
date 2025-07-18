@@ -1,4 +1,4 @@
-#include "gpu/gpuPipeline.cuh"
+#include "gpu/gpuUtils.cuh"
 #include "gpu/kmerCounter.cuh"
 #include "cpu/cpuMultithread.hpp"
 #include "utils/constants.hpp"

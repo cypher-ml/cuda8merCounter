@@ -23,7 +23,6 @@ set(CPU_SOURCES
     src/cpu/mainCpu.cpp
     src/cpu/cpuProducer.cpp
     src/cpu/cpuConsumer.cpp
-    src/cpu/cpuPipeline.cpp
     src/cpu/kmerCounter.cpp
     ${COMMON_SOURCES}
 )
@@ -31,7 +30,7 @@ set(CPU_SOURCES
 set(GPU_SOURCES
     src/gpu/mainGpu.cu
     src/cpu/cpuProducer.cpp
-    src/gpu/gpuPipeline.cu
+    src/gpu/gpuUtils.cu
     ${COMMON_SOURCES}
 )
 

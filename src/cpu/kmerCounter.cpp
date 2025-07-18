@@ -12,7 +12,6 @@ void count_kmers_in_chunk_with_boundaries(const EncodedChunk& chunk,
     const auto& data = chunk.data;
     uint64_t kmer_bit_buffer = 0;
     
-    // Determine where to start counting
     size_t start_offset = 0;
     if (!is_first_chunk && chunk.base_count > FastaUtils::K_MER_SIZE - 1) {
         // Skip the first K_MER_SIZE-1 k-mers to avoid double counting
