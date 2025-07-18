@@ -5,6 +5,25 @@
 
 Follow these steps to download the data, build the project, and run the analysis.
 
+## Dependencies
+
+### Build & Compilation 🛠️
+
+* **CMake**: Version `4.0.3` or higher is required to configure the project.
+* **C++ Compiler**: A compiler with full support for **C++20** is necessary.
+* **Make**: The `build.sh` script utilizes `make` to compile the executables from the generated Makefiles.
+* **pthreads**: The project relies on the POSIX threads library for multithreading, which is a standard component on most Linux/macOS systems.
+
+### GPU-Specific Dependencies (for the GPU version) 🚀
+
+* **NVIDIA CUDA Toolkit**: The GPU-accelerated version is built with the CUDA Toolkit. The `CMakeLists.txt` is configured for **CUDA 12.9** and requires C++20 support.
+* **NVIDIA GPU**: To run the `gpu_kmer_counter`, you need an NVIDIA GPU with a compute capability of **7.5 or higher** (e.g., Turing, Ampere, Ada, Hopper architectures).
+
+### Data Download Script 🧬
+
+* **wget**: The `downloadHG38fasta.sh` script uses `wget` to download the human reference genome.
+* **gunzip**: This is used by the same script to decompress the downloaded genome file (`.fa.gz`).
+
 #### Step 1: Download Example Data
 
 A script is provided to download the human reference genome (`hg38.fa`) required for the analysis.
