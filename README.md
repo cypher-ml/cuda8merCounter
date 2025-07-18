@@ -133,12 +133,17 @@ GPU Time (2 seconds)
 Speedup Factor > 2
 
 
-The results clearly demonstrate the massive parallelism of the GPU, which provides a significant speedup over the multi-threaded CPU implementation for this compute-bound task.
+The results clearly demonstrate utilizing the processing power of the GPU provides a speedup over the multi-threaded CPU implementation for this task.
+
+Speedup is not huge, this is due to the bottleneck of the task being I/O. Speedup comes from utilizing all the cpu cores for the producer task (doubles the cpu core utilization for I/O). GPU computation speed is miniscule compared to this, and it is observed that the GPU cores stay idle a lot for the hardware above.
+
+In `stats/` folder, you can find cuda profiling stat dumps for details.
+
 
 5. Optimizations and Potential Improvements
 
-    Implemented Optimization: The producer-consumer pipeline with asynchronous operations is the key optimization, effectively hiding I/O latency and keeping the GPU saturated.
+    Implemented Optimization: The producer-consumer pipeline with asynchronous operations is the key optimization, effectively hiding I/O latency and keeping the GPU working.
 
-    Potential Improvement (I/O Bottleneck): The primary remaining bottleneck is the data transfer from system RAM to GPU VRAM. For ultimate performance on compatible systems (Linux with NVMe SSDs), this could be eliminated by using NVIDIA's GPUDirect Storage. This technology allows data to be read directly from the NVMe drive into GPU memory, bypassing the CPU and system RAM entirely and maximizing I/O throughput.
+    Potential Improvement (I/O Bottleneck): The primary remaining bottleneck is the data transfer from system RAM to GPU VRAM. For ultimate performance on compatible systems (Linux with NVMe SSDs), this could be eliminated by using NVIDIA's GPUDirect Storage. This technology allows data to be read directly from the NVMe drive into GPU memory, bypassing the CPU and system RAM entirely and maximizing I/O throughput. For cpu only task, Memory-mapped I/O can increase the speed of data retrieval.
 
-    Potential Improvement (Kernel Optimization): The current kernel relies heavily on atomic operations, which can cause serialization. An alternative approach would be for each thread block to use its fast, on-chip shared memory to build a private histogram. These private histograms would then be merged into the global histogram in a final, much smaller step, significantly reducing contention on global memory.
+    Potential Improvement (Kernel Optimization): The current kernel relies heavily on atomic operations, which can cause serialization. An alternative approach would be for each thread block to use its fast, on-chip shared memory to build a private histogram. These private histograms would then be merged into the global histogram in a final, much smaller step, significantly reducing contention on global memory. This optimization is not made because the effect of serialization is much less than I/O Bottleneck.
