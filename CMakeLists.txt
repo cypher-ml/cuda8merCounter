@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.25.2)
+cmake_minimum_required (VERSION 4.0.3)
 project(kmer_counter LANGUAGES CXX)
 
 # Set C++ standard
@@ -21,7 +21,7 @@ set(COMMON_SOURCES
 
 set(CPU_SOURCES
     src/cpu/mainCpu.cpp
-    src/cpu/cpuMultithread.cpp
+    src/cpu/cpuProducer.cpp
     src/cpu/cpuConsumer.cpp
     src/cpu/cpuPipeline.cpp
     src/cpu/kmerCounter.cpp
@@ -30,7 +30,8 @@ set(CPU_SOURCES
 
 set(GPU_SOURCES
     src/gpu/mainGpu.cu
-    src/cpu/cpuMultithread.cpp
+    src/cpu/cpuProducer.cpp
+    src/gpu/gpuPipeline.cu
     ${COMMON_SOURCES}
 )
 

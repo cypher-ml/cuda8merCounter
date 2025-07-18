@@ -1,5 +1,5 @@
-#include "cpu/cpuMultithread.hpp" // This header declares consumer_task
-#include "cpu/kmerCounter.hpp"   // This header declares the function it calls
+#include "cpu/cpuMultithread.hpp" 
+#include "cpu/kmerCounter.hpp"   
 
 #include <vector>
 #include <mutex>
@@ -9,8 +9,7 @@
 
 using namespace std;
 
-// The consumer task is only used by the CPU version. It is now in its own file
-// to ensure it is not compiled as part of the GPU build.
+
 void consumer_task(vector<uint64_t>& total_counts) {
     while (true) {
         unique_lock<mutex> lock(Threading::queue_mutex);
@@ -26,7 +25,6 @@ void consumer_task(vector<uint64_t>& total_counts) {
         Threading::chunk_queue.pop();
         lock.unlock();
 
-        // This function is defined in kmerCounter.cpp and is only needed for the CPU consumer.
         count_kmers_in_chunk_with_boundaries(chunk, total_counts, false);
     }
 }
