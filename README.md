@@ -135,7 +135,7 @@ Speedup Factor > 2
 
 The results clearly demonstrate utilizing the processing power of the GPU provides a speedup over the multi-threaded CPU implementation for this task.
 
-Speedup is not huge, this is due to the bottleneck of the task being I/O. Speedup comes from utilizing all the cpu cores for the producer task (doubles the cpu core utilization for I/O). GPU computation speed is miniscule compared to this, and it is observed that the GPU cores stay idle a lot for the hardware above.
+Speedup is not huge, this is due to the bottleneck of the task being I/O. Speedup comes from utilizing all the cpu cores for the producer task (doubles the cpu core utilization for I/O). GPU computation time is miniscule compared to this, and it is observed that the GPU cores stay idle most of the time for the hardware above.
 
 In `stats/` folder, you can find cuda profiling stat dumps for details.
 
