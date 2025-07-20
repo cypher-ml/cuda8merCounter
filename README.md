@@ -46,6 +46,18 @@ A script is provided to download the human reference genome (`hg38.fa`) required
     ```
     This will create an `exampleData` directory and place the `hg38.fa` file inside it. **Note:** This is a large file (~3 GB uncompressed) and the download may take some time.
 
+    This program is highly optimized for performance and expects a specific input format: Single sequence fasta (Only 1 sequence header (line that starts with '>') at the first line or no sequence headers.)
+
+    Please use following command in your terminal if you prefer to use your own multiple sequence fasta (e.g. reference human genome):
+
+    ```bash
+    grep -v '^>' [your_input_file.fa] > [your_output_file.fa]
+    ```
+    # Example:
+    ```bash
+    grep -v '^>' hg38.fa  > hg38_singeSequence.fa
+    ```
+
 #### Step 2: Build the Project
 
 The `build.sh` script automates the compilation of both the CPU and GPU executables.
