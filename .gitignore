@@ -1,4 +1,4 @@
-hg38.fa
+hg38*
 
 test_*.cpp
 debug*

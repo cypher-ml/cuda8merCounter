@@ -41,7 +41,7 @@ else
 
     echo ""
     echo "--- Decompressing Genome File ---"
-    gunzip -k "$FULL_COMPRESSED_PATH"
+    gunzip -c "$FULL_COMPRESSED_PATH" | grep -v '^>' > "$FULL_FINAL_PATH"
     echo "Decompression complete."
 fi
 
